@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 @Autonomous
-public class Left1_4 extends LinearOpMode {
+public class workingAuton extends LinearOpMode {
 
     private FtcDashboard dashboard = FtcDashboard.getInstance();
 
