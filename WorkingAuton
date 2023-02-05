@@ -1,0 +1,95 @@
+package org.firstinspires.ftc.teamcode.comp;
+
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.roadrunner.geometry.Pose2d;
+import com.acmerobotics.roadrunner.geometry.Vector2d;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.teamcode.Constants;
+import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
+import org.firstinspires.ftc.teamcode.drive.opmode.PoseStorage;
+import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequence;
+import org.firstinspires.ftc.teamcode.vision.Detector;
+import org.firstinspires.ftc.teamcode.vision.StickObserverPipeline;
+import org.openftc.easyopencv.OpenCvCamera;
+import org.openftc.easyopencv.OpenCvCameraFactory;
+import org.openftc.easyopencv.OpenCvCameraRotation;
+import org.openftc.easyopencv.OpenCvWebcam;
+
+import java.util.ArrayList;
+import java.util.Collections;
+
+@Autonomous
+public class Left1_4 extends LinearOpMode {
+
+    private FtcDashboard dashboard = FtcDashboard.getInstance();
+
+    TrajectorySequence toPreload;
+    TrajectorySequence toLoad;
+    TrajectorySequence toDeposit;
+    TrajectorySequence toPark;
+    DistanceSensor depositSensor, loadSensor;
+
+    public static int[] coneHeights = {0, 70, 136, 195, 258};
+
+    int signalZonePos = 1;
+
+    @Override
+    public void runOpMode() throws InterruptedException {
+
+
+        
+        OpenCvWebcam webcam;
+        int cameraMonitorViewId = hardwareMap.appContext.getResources()
+                .getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        webcam = OpenCvCameraFactory.getInstance()
+                .createWebcam(hardwareMap.get(WebcamName.class, "webby"), cameraMonitorViewId);
+        Detector signal = new Detector(telemetry);
+        webcam.setPipeline(signal);
+        webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
+            @Override
+            public void onOpened() {
+                webcam.startStreaming(320, 240, OpenCvCameraRotation.UPRIGHT);
+            }
+
+            @Override
+            public void onError(int errorCode) {
+            }
+        });
+
+
+         
+        SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
+        depositSensor = hardwareMap.get(DistanceSensor.class, "depositSensor");
+        loadSensor = hardwareMap.get(DistanceSensor.class, "loadSensor");
+        Pose2d myPose = new Pose2d(-36, -63, Math.toRadians(90));
+
+
+        drive.setPoseEstimate(myPose);
+
+
+
+        toPreload = drive.trajectorySequenceBuilder(myPose)
+                .lineTo(new Vector2d(-36, -38))
+                .lineToSplineHeading(new Pose2d(-36, -14, Math.toRadians(180)), Constants.fortyV, Constants.thirtyA)
+                .splineToConstantHeading(new Vector2d(-20, -10), Math.toRadians(0), Constants.fortyV, Constants.thirtyFiveA)
+                .addTemporalMarker(0.5, () -> drive.sidewayArm())// th relocalization data, ACCEL SLOW 15), Constants.sixtyV, Constants.fortyA) 
+                .addSpatialMarker(new Vector2d(-55, -11), () -> drive.clawClose())
+                .lineToConstantHeading(new Vector2d(-56.75, -11)) //Go to target with relocalization data, ACCEL SLOW 15), Constants.sixtyV, Constants.fortyA)
+                .build();
+        toDeposit = drive.trajectorySequenceBuilder(toLoad.end())
+                .lineTo(new Vector2d(-19, -10))
+                .addTemporalMarker(0.4, () -> drive.sidewayArm())
+                .build();
+
+
+
+
+        drive.clawWideOpen();
+
+        waitForStart();
