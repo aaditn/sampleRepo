@@ -82,6 +82,10 @@ public class workingAuton extends LinearOpMode {
                 .addSpatialMarker(new Vector2d(-55, -11), () -> drive.clawClose())
                 .lineToConstantHeading(new Vector2d(-56.75, -11)) //Go to target with relocalization data, ACCEL SLOW 15), Constants.sixtyV, Constants.fortyA)
                 .build();
+        toLoad = drive.trajectorySequenceBuilder(toPreload.end())
+                .addSpatialMarker(new Vector2d(-55, -11), () -> drive.clawClose())
+                .lineToConstantHeading(new Vector2d(-56.75, -11)) //Go to target with relocalization data, ACCEL SLOW 15), Constants.sixtyV, Constants.fortyA) //Go to target with re
+                .build();
         toDeposit = drive.trajectorySequenceBuilder(toLoad.end())
                 .lineTo(new Vector2d(-19, -10))
                 .addTemporalMarker(0.4, () -> drive.sidewayArm())
